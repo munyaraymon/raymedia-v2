@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Raymedia",
+    "slug": "raymedia",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "raymedia",
+    "android": {
+      "package": "com.raymedia.app",
+      "versionCode": 1
+    }
+  }
+}
