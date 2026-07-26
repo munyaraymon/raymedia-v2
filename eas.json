@@ -1,13 +1,10 @@
 {
-  "cli": {
-    "requireCommit": false
-  },
   "build": {
     "preview": {
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       }
-    },
-    "production": {}
+    }
   }
 }
