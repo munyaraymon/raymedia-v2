@@ -4,10 +4,13 @@
     "slug": "raymedia",
     "version": "1.0.0",
     "orientation": "portrait",
+    "android": {
+      "package": "com.munyandoro.raymediav2"
+    },
     "extra": {
       "eas": {
         "projectId": "bd995020-89ba-4de8-8e07-a0382d4428b2"
       }
     }
   }
-}
+    }
