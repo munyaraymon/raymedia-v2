@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "Raymedia",
+    "name": "Raymedia V2",
     "slug": "raymedia",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "raymedia",
-    "android": {
-      "package": "com.raymedia.app",
-      "versionCode": 1
+    "extra": {
+      "eas": {
+        "projectId": "bd995020-89ba-4de8-8e07-a0382d4428b2"
+      }
     }
   }
 }
