@@ -2,12 +2,18 @@
   "expo": {
     "name": "Raymedia V2",
     "slug": "raymedia",
-    "icon": "./assets/icon.png",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "raymedia",
     "android": {
-      "package": "com.munyandoro.raymediav2",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+      "package": "com.munyandoro.raymediav2"
+    },
+    "cli": {
+      "appVersionSource": "remote"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bd995020-89ba-4de8-8e07-a0382d4428b2"
       }
     }
   }
