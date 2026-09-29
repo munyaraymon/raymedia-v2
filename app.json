@@ -8,8 +8,7 @@
     "android": {
       "package": "com.munyandoro.raymediav2"
     },
-    "cli": {
-      "appVersionSource": "remote"
+    "appVersionSource": "remote"
     },
     "extra": {
       "eas": {
