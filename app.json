@@ -16,10 +16,15 @@
     ],
     "android": {
       "package": "com.munyaraymon.raymediav2",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bd995020-89ba-4de8-8e07-a0382d428b2"
       }
     }
   }
