@@ -1,17 +1,25 @@
 {
   "expo": {
     "name": "Raymedia V2",
-    "slug": "raymedia",
-    "version": "1.0.0",
+    "slug": "raymedia-v2",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "scheme": "raymedia",
-    "android": {
-      "package": "com.munyandoro.raymediav2"
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
     },
-    "appVersionSource": "remote",
-    "extra": {
-      "eas": {
-        "projectId": "bd995020-89ba-4de8-8e07-a0382d4428b2"
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.munyaraymon.raymediav2",
+      "versionCode": 3,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
       }
     }
   }
