@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Raymedia V2",
-    "slug": "raymedia-v2",
+    "slug": "raymedia",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,12 +11,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "android": {
       "package": "com.munyaraymon.raymediav2",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
