@@ -1,29 +1,32 @@
 {
   "expo": {
-    "name": "Raymedia V2",
-    "slug": "raymedia",
-    "version": "1.0.1",
+    "name": "raymedia-v2",
+    "slug": "raymedia-v2",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "scheme": "raymedia",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
-      "package": "com.munyaraymon.raymediav2",
-      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       }
     },
-    "extra": {
-      "eas": {
-        "projectId": "bd995020-89ba-4de8-8e07-a0382d4428b2"
-      }
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
     }
   }
 }
