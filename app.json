@@ -1,39 +1,37 @@
 {
-  "name": "raymedia-v2",
-  "slug": "raymedia-v2",
-  "version": "1.0.0",
-  "orientation": "portrait",
-  "icon": "./assets/icon.png",
-  "scheme": "raymedia",
-  "userInterfaceStyle": "light",
-  "splash": {
-    "image": "./assets/splash.png",
-    "resizeMode": "contain",
-    "backgroundColor": "#000000"
-  },
-  "assetBundlePatterns": [
-    "**/*"
-  ],
-  "ios": {
-    "supportsTablet": true,
-    "bundleIdentifier": "com.raymedia.v2"
-  },
-  "android": {
-    "package": "com.raymedia.v2",
-    "adaptiveIcon": {
-      "foregroundImage": "./assets/adaptive-icon.png",
+  "expo": {
+    "name": "raymedia-v2",
+    "slug": "raymedia-v2",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "raymedia",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#000000"
-    }
-  },
-  "web": {
-    "bundler": "metro",
-    "favicon": "./assets/icon.png"
-  },
-  "sdkVersion": "52.0.0",
-  "platforms": ["ios", "android"],
-  "extra": {
-    "eas": {
-      "projectId": "bd995020-89ba-4de8-8e07-a0382d4428b2"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.raymedia.v2"
+    },
+    "android": {
+      "package": "com.raymedia.v2",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bd995020-89ba-4de8-8e07-a0382d4428b2"
+      }
     }
   }
 }
