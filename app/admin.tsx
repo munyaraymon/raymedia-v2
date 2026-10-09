@@ -3,106 +3,87 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 
-const ADMIN_PASSWORD = "ray1234";
-
 export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [password, setPassword] = useState("");
-
   const [businessName, setBusinessName] = useState("");
   const [service, setService] = useState("");
   const [area, setArea] = useState("Randburg");
   const [offer, setOffer] = useState("");
   const [price, setPrice] = useState("");
   const [phone, setPhone] = useState("");
-
-  const [realPromos, setRealPromos] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>({});
+  const [realPromos, setRealPromos] = useState([]);
+  const [stats, setStats] = useState({});
   const router = useRouter();
 
   useEffect(() => { loadAll(); }, []);
-
   const loadAll = async () => {
-    const saved = await AsyncStorage.getItem('real_promos');
-    const savedStats = await AsyncStorage.getItem('ray_stats');
-    if (saved) setRealPromos(JSON.parse(saved));
-    if (savedStats) setStats(JSON.parse(savedStats));
+    const s = await AsyncStorage.getItem('real_promos');
+    const st = await AsyncStorage.getItem('ray_stats');
+    if (s) setRealPromos(JSON.parse(s));
+    if (st) setStats(JSON.parse(st));
   };
 
   const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsLoggedIn(true);
-      loadAll();
-    } else {
-      Alert.alert("Wrong password");
-    }
+    if (password === "ray1234") { setIsLoggedIn(true); loadAll(); }
+    else Alert.alert("Wrong password");
   };
 
-  const handleAddPromo = async () => {
-    if (!businessName ||!offer ||!phone) {
-      Alert.alert("Fill business name, offer and phone");
-      return;
-    }
-    const newPromo = {
-      id: Date.now(),
-      businessName, service, area, offer, price, phone
-    };
+  const handleAdd = async () => {
+    if (!businessName ||!offer ||!phone) { Alert.alert("Fill all"); return; }
+    const newPromo = { id: Date.now(), businessName, service, area, offer, price, phone };
     const updated = [...realPromos, newPromo];
     await AsyncStorage.setItem('real_promos', JSON.stringify(updated));
     setRealPromos(updated);
-    setBusinessName(""); setService(""); setOffer(""); setPrice(""); setPhone("");
-    Alert.alert("Success!", `${newPromo.businessName} is LIVE!`);
+    setBusinessName(""); setOffer(""); setPrice(""); setPhone(""); setService("");
+    Alert.alert("LIVE!");
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id) => {
     const updated = realPromos.filter(p => p.id!== id);
     await AsyncStorage.setItem('real_promos', JSON.stringify(updated));
     setRealPromos(updated);
-    // also delete stats for it
-    const newStats = {...stats };
-    delete newStats[id];
-    await AsyncStorage.setItem('ray_stats', JSON.stringify(newStats));
-    setStats(newStats);
-  };
-
-  const handleResetStats = async () => {
-    Alert.alert("Reset all counts?", "This will reset views/calls to 0", [
-      { text: "Cancel" },
-      { text: "Reset", onPress: async () => {
-        await AsyncStorage.removeItem('ray_stats');
-        setStats({});
-      }}
-    ]);
   };
 
   if (!isLoggedIn) {
     return (
       <View style={{ flex: 1, backgroundColor: "#0a0a0a", padding: 20, paddingTop: 100 }}>
-        <Text style={{ color: "#FFD700", fontSize: 24, fontWeight: "bold" }}>Raymedia Admin</Text>
-        <Text style={{ color: "white", marginTop: 10 }}>Enter password to add real businesses</Text>
-        <TextInput
-          value={password} onChangeText={setPassword} secureTextEntry
-          placeholder="Password" placeholderTextColor="#888"
-          style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 20 }}
-        />
+        <Text style={{ color: "#FFD700", fontSize: 24, fontWeight: "bold" }}>Admin</Text>
+        <TextInput value={password} onChangeText={setPassword} secureTextEntry placeholder="Password" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 20 }} />
         <TouchableOpacity onPress={handleLogin} style={{ backgroundColor: "#FFD700", padding: 15, borderRadius: 10, marginTop: 15 }}>
           <Text style={{ textAlign: "center", fontWeight: "bold" }}>LOGIN</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
-          <Text style={{ color: "#888", textAlign: "center" }}>Back to App</Text>
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}><Text style={{ color: "#888", textAlign: "center", marginTop: 20 }}>Back</Text></TouchableOpacity>
       </View>
     );
   }
 
-  const totalViews = Object.values(stats).reduce((sum: number, s: any) => sum + (s.views || 0), 0);
-  const totalCalls = Object.values(stats).reduce((sum: number, s: any) => sum + (s.calls || 0), 0);
-  const totalWAs = Object.values(stats).reduce((sum: number, s: any) => sum + (s.whatsapps || 0), 0);
-
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "#0a0a0a", padding: 16, paddingTop: 60 }}>
-      <Text style={{ color: "#FFD700", fontSize: 22, fontWeight: "bold" }}>Add Real Business Promo</Text>
-      <Text style={{ color: "#888", fontSize: 11, marginBottom: 15 }}>This will show to ALL customers instantly</Text>
+      <Text style={{ color: "#FFD700", fontSize: 22, fontWeight: "bold" }}>Add Business</Text>
+      <TextInput value={businessName} onChangeText={setBusinessName} placeholder="Business Name" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 10 }} />
+      <TextInput value={service} onChangeText={setService} placeholder="Service" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 10 }} />
+      <TextInput value={area} onChangeText={setArea} placeholder="Area" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 10 }} />
+      <TextInput value={offer} onChangeText={setOffer} placeholder="Offer" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 10 }} />
+      <TextInput value={price} onChangeText={setPrice} placeholder="Price" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 10 }} />
+      <TextInput value={phone} onChangeText={setPhone} placeholder="Phone" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 10 }} />
+      <TouchableOpacity onPress={handleAdd} style={{ backgroundColor: "#FFD700", padding: 16, borderRadius: 12, marginTop: 10 }}>
+        <Text style={{ textAlign: "center", fontWeight: "bold" }}>SAVE - MAKE LIVE</Text>
+      </TouchableOpacity>
 
-      {/* STATS DASHBOARD - THIS IS WHAT YOU SHOW BUSINESSES */}
-      <View style={{ backgroundColor: "#FFD700", borderRadius: 12, padding: 12, flex
+      <View style={{ marginTop: 30 }}>
+        <Text style={{ color: "#FFD700", fontWeight: "bold" }}>Live ({realPromos.length}) - Counts</Text>
+        {realPromos.map((p) => {
+          const s = stats[p.id] || { views: 0, calls: 0, whatsapps: 0 };
+          return (
+            <View key={p.id} style={{ backgroundColor: "#1a1a1a", padding: 12, borderRadius: 10, marginTop: 10 }}>
+              <Text style={{ color: "white", fontWeight: "bold" }}>{p.businessName}</Text>
+              <Text style={{ color: "#FFD700", marginTop: 5 }}>Views {s.views} | Calls {s.calls} | WA {s.whatsapps}</Text>
+              <TouchableOpacity onPress={() => handleDelete(p.id)}><Text style={{ color: "red", marginTop: 8 }}>Delete</Text></TouchableOpacity>
+            </View>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+                               }
