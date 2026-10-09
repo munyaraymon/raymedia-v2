@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, ScrollView, Linking } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link } from 'expo-router';
 
-// YOUR OLD FAKE PROMOS - KEEP AS BACKUP
 const MOCK_PROMOS = [
   { id: 1, businessName: "Joe's Plumbing", service: "Plumbing", area: "Randburg", offer: "20% OFF First Call", price: "R350", phone: "0820000001" },
   { id: 2, businessName: "Sarah's Electrical", service: "Electrical", area: "Fourways", offer: "Free Call Out", price: "R0", phone: "0820000002" },
@@ -12,6 +11,7 @@ const MOCK_PROMOS = [
 
 export default function Index() {
   const [realPromos, setRealPromos] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,26 +21,58 @@ export default function Index() {
   const loadPromos = async () => {
     try {
       const saved = await AsyncStorage.getItem('real_promos');
-      if (saved) {
-        setRealPromos(JSON.parse(saved));
-      }
+      const savedStats = await AsyncStorage.getItem('ray_stats');
+      if (saved) setRealPromos(JSON.parse(saved));
+      if (savedStats) setStats(JSON.parse(savedStats));
     } catch (e) {
-      console.log("Error loading promos", e);
+      console.log("Error loading", e);
     }
     setLoading(false);
   };
 
-  // THIS IS THE MAGIC: If you added real promos in Admin, show those. If not, show fake ones.
+  const saveStats = async (newStats: any) => {
+    setStats(newStats);
+    await AsyncStorage.setItem('ray_stats', JSON.stringify(newStats));
+  };
+
   const promosToShow = realPromos.length > 0 ? realPromos : MOCK_PROMOS;
   const isShowingReal = realPromos.length > 0;
 
-  const handleCall = (phone: string) => {
-    Linking.openURL(`tel:${phone}`);
+  // AUTO COUNT VIEW - runs once when promos load
+  useEffect(() => {
+    if (!loading) {
+      const newStats = { ...stats };
+      let changed = false;
+      promosToShow.forEach((p: any) => {
+        if (!newStats[p.id]) newStats[p.id] = { views: 0, calls: 0, whatsapps: 0 };
+        newStats[p.id].views += 1;
+        changed = true;
+      });
+      if (changed) saveStats(newStats);
+    }
+  }, [loading, realPromos]);
+
+  const handleCall = async (promo: any) => {
+    try {
+      const newStats = { ...stats };
+      if (!newStats[promo.id]) newStats[promo.id] = { views: 0, calls: 0, whatsapps: 0 };
+      newStats[promo.id].calls += 1;
+      await saveStats(newStats);
+    } catch {}
+    Linking.openURL(`tel:${promo.phone}`);
   };
 
-  const handleWhatsapp = (phone: string) => {
-    Linking.openURL(`https://wa.me/${phone.replace(/\D/g, '')}`);
+  const handleWhatsapp = async (promo: any) => {
+    try {
+      const newStats = { ...stats };
+      if (!newStats[promo.id]) newStats[promo.id] = { views: 0, calls: 0, whatsapps: 0 };
+      newStats[promo.id].whatsapps += 1;
+      await saveStats(newStats);
+    } catch {}
+    Linking.openURL(`https://wa.me/${promo.phone.replace(/\D/g, '')}`);
   };
+
+  const totalViews = Object.values(stats).reduce((sum: number, s: any) => sum + (s.views || 0), 0);
 
   if (loading) {
     return (
@@ -54,15 +86,16 @@ export default function Index() {
     <View style={{ flex: 1, backgroundColor: "#0a0a0a" }}>
       <ScrollView style={{ flex: 1, padding: 16, paddingTop: 60 }}>
         
-        {/* HEADER */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View>
             <Text style={{ color: "#FFD700", fontSize: 28, fontWeight: "bold" }}>Raymedia</Text>
             <Text style={{ color: "white", fontSize: 12 }}>
               {isShowingReal ? `🔥 ${realPromos.length} LIVE Business Deals` : "Example Promos (Add real in Admin)"}
             </Text>
+            {totalViews > 0 && (
+              <Text style={{ color: "#888", fontSize: 10, marginTop: 2 }}>👁️ {totalViews} total views by locals</Text>
+            )}
           </View>
-          {/* SECRET ADMIN BUTTON - ONLY YOU KNOW THIS */}
           <Link href="/admin" asChild>
             <TouchableOpacity style={{ backgroundColor: "#1a1a1a", padding: 10, borderRadius: 20 }}>
               <Text style={{ color: "#FFD700", fontSize: 10 }}>ADMIN</Text>
@@ -70,7 +103,6 @@ export default function Index() {
           </Link>
         </View>
 
-        {/* PROMO LIST */}
         <View style={{ marginTop: 20 }}>
           {promosToShow.map((promo) => (
             <View key={promo.id} style={{ backgroundColor: "#1a1a1a", borderRadius: 14, padding: 16, marginBottom: 12, borderLeftWidth: 4, borderLeftColor: "#FFD700" }}>
@@ -80,10 +112,10 @@ export default function Index() {
               <Text style={{ color: "#FFD700", fontSize: 18, fontWeight: "bold", marginTop: 4 }}>{promo.price}</Text>
               
               <View style={{ flexDirection: "row", marginTop: 12, gap: 10 }}>
-                <TouchableOpacity onPress={() => handleCall(promo.phone)} style={{ backgroundColor: "#FFD700", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, flex: 1 }}>
+                <TouchableOpacity onPress={() => handleCall(promo)} style={{ backgroundColor: "#FFD700", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, flex: 1 }}>
                   <Text style={{ textAlign: "center", fontWeight: "bold", color: "black", fontSize: 12 }}>CALL</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleWhatsapp(promo.phone)} style={{ backgroundColor: "white", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, flex: 1 }}>
+                <TouchableOpacity onPress={() => handleWhatsapp(promo)} style={{ backgroundColor: "white", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, flex: 1 }}>
                   <Text style={{ textAlign: "center", fontWeight: "bold", color: "black", fontSize: 12 }}>WHATSAPP</Text>
                 </TouchableOpacity>
               </View>
@@ -95,4 +127,4 @@ export default function Index() {
       </ScrollView>
     </View>
   );
-      }
+    }
