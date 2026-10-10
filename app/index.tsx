@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Linking, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link } from 'expo-router';
 
@@ -12,17 +12,28 @@ const MOCK_PROMOS = [
 export default function Index() {
   const [realPromos, setRealPromos] = useState([]);
   const [stats, setStats] = useState({});
+  const [sponsoredAds, setSponsoredAds] = useState([]);
+  const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => { loadData(); }, []);
+
   useEffect(() => {
-    loadData();
-  }, []);
+    if (sponsoredAds.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentAdIndex((prev) => (prev + 1) % sponsoredAds.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [sponsoredAds]);
 
   const loadData = async () => {
     const saved = await AsyncStorage.getItem('real_promos');
     const savedStats = await AsyncStorage.getItem('ray_stats');
+    const savedAds = await AsyncStorage.getItem('sponsored_ads');
     if (saved) setRealPromos(JSON.parse(saved));
     if (savedStats) setStats(JSON.parse(savedStats));
+    if (savedAds) setSponsoredAds(JSON.parse(savedAds));
     setLoading(false);
   };
 
@@ -57,31 +68,21 @@ export default function Index() {
     if (!newStats[promo.id]) newStats[promo.id] = { views: 0, calls: 0, whatsapps: 0 };
     newStats[promo.id].whatsapps += 1;
     await saveStats(newStats);
-    const clean = promo.phone.replace(/\D/g, '');
-    Linking.openURL(`https://wa.me/${clean}`);
+    Linking.openURL(`https://wa.me/${promo.phone.replace(/\D/g, '')}`);
   };
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#0a0a0a", justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: "white" }}>Loading...</Text>
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: "#0a0a0a", justifyContent: "center", alignItems: "center" }}><Text style={{ color: "white" }}>Loading...</Text></View>;
   }
+
+  const currentAd = sponsoredAds[currentAdIndex];
 
   return (
     <View style={{ flex: 1, backgroundColor: "#0a0a0a" }}>
-      <ScrollView style={{ flex: 1, padding: 16, paddingTop: 60 }}>
+      <ScrollView style={{ flex: 1, padding: 16, paddingTop: 60, paddingBottom: 90 }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <View>
-            <Text style={{ color: "#FFD700", fontSize: 28, fontWeight: "bold" }}>Raymedia</Text>
-            <Text style={{ color: "white", fontSize: 12 }}>{realPromos.length} LIVE Deals</Text>
-          </View>
-          <Link href="/admin" asChild>
-            <TouchableOpacity style={{ backgroundColor: "#1a1a1a", padding: 10, borderRadius: 20 }}>
-              <Text style={{ color: "#FFD700", fontSize: 10 }}>ADMIN</Text>
-            </TouchableOpacity>
-          </Link>
+          <View><Text style={{ color: "#FFD700", fontSize: 28, fontWeight: "bold" }}>Raymedia</Text><Text style={{ color: "white", fontSize: 12 }}>{realPromos.length} LIVE Deals</Text></View>
+          <Link href="/admin" asChild><TouchableOpacity style={{ backgroundColor: "#1a1a1a", padding: 10, borderRadius: 20 }}><Text style={{ color: "#FFD700", fontSize: 10 }}>ADMIN</Text></TouchableOpacity></Link>
         </View>
 
         <View style={{ marginTop: 20 }}>
@@ -92,17 +93,26 @@ export default function Index() {
               <Text style={{ color: "white", marginTop: 8 }}>{promo.offer}</Text>
               <Text style={{ color: "#FFD700", fontWeight: "bold", marginTop: 4 }}>{promo.price}</Text>
               <View style={{ flexDirection: "row", marginTop: 12, gap: 10 }}>
-                <TouchableOpacity onPress={() => handleCall(promo)} style={{ backgroundColor: "#FFD700", padding: 10, borderRadius: 8, flex: 1 }}>
-                  <Text style={{ textAlign: "center", fontWeight: "bold", fontSize: 12 }}>CALL</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleWhatsapp(promo)} style={{ backgroundColor: "white", padding: 10, borderRadius: 8, flex: 1 }}>
-                  <Text style={{ textAlign: "center", fontWeight: "bold", fontSize: 12 }}>WHATSAPP</Text>
-                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleCall(promo)} style={{ backgroundColor: "#FFD700", padding: 10, borderRadius: 8, flex: 1 }}><Text style={{ textAlign: "center", fontWeight: "bold", fontSize: 12 }}>CALL</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => handleWhatsapp(promo)} style={{ backgroundColor: "white", padding: 10, borderRadius: 8, flex: 1 }}><Text style={{ textAlign: "center", fontWeight: "bold", fontSize: 12 }}>WHATSAPP</Text></TouchableOpacity>
               </View>
             </View>
           ))}
         </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {currentAd && (
+        <TouchableOpacity onPress={() => Linking.openURL(`tel:${currentAd.phone}`)} style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#FFD700", padding: 10, flexDirection: "row", alignItems: "center" }}>
+          {currentAd.image && <Image source={{ uri: currentAd.image }} style={{ width: 50, height: 50, borderRadius: 8, marginRight: 10 }} />}
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 8, fontWeight: "bold" }}>⭐ SPONSORED {currentAdIndex+1}/{sponsoredAds.length}</Text>
+            <Text style={{ fontWeight: "bold", fontSize: 12 }}>{currentAd.businessName}</Text>
+            <Text style={{ fontSize: 11 }}>{currentAd.offer}</Text>
+          </View>
+          <Text style={{ backgroundColor: "black", color: "white", padding: 8, borderRadius: 8, fontSize: 10, fontWeight: "bold" }}>CALL</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
     }
