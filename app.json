@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "raymedia-v2",
+    "name": "RAYMEDIA",
     "slug": "raymedia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "raymedia",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -44,4 +44,4 @@
       }
     }
   }
-  }
+}
