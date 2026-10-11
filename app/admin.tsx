@@ -1,98 +1,115 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { Picker } from '@react-native-picker/picker';
+
+const CATEGORIES = ["Home Services","Food & Takeaway","Beauty & Care","Auto & Repair","Health","Shopping & Retail","Education & Kids","Deals from Amazon"];
 
 export default function Admin() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [password, setPassword] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [category, setCategory] = useState("Food");
-  const [area, setArea] = useState("Randburg");
-  const [offer, setOffer] = useState("");
-  const [price, setPrice] = useState("");
+  // --- BUSINESS FORM ---
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState(CATEGORIES[0]);
   const [phone, setPhone] = useState("");
-  const [realPromos, setRealPromos] = useState([]);
-  const router = useRouter();
+  const [address, setAddress] = useState("");
+  const [businesses, setBusinesses] = useState<any[]>([]);
 
-  const CATS = ["Food","Beauty","Home","Health","Auto","Fashion","Other"];
+  // --- BANNER CONTROL ---
+  const [bannerTitle, setBannerTitle] = useState("Premium Banner - Your Business Here");
+  const [bannerSub, setBannerSub] = useState("Advertise in Randburg from R250/month - Call 072 123 4567");
 
-  useEffect(() => { loadAll(); }, []);
-  const loadAll = async () => {
-    const s = await AsyncStorage.getItem('real_promos');
-    if (s) setRealPromos(JSON.parse(s));
-  };
-  const handleLogin = () => { if (password === "ray1234") { setIsLoggedIn(true); } else Alert.alert("Wrong password"); };
-  
-  const handleAdd = async () => {
-    if (!businessName || !offer || !phone) { Alert.alert("Fill all required"); return; }
-    const newPromo = { 
-      id: Date.now(), 
-      businessName, 
-      category, 
-      service: category,
-      area, 
-      offer, 
-      price, 
-      phone,
-      searchText: (businessName + " " + offer + " " + category + " " + area).toLowerCase()
-    };
-    const updated = [...realPromos, newPromo];
-    await AsyncStorage.setItem('real_promos', JSON.stringify(updated));
-    setRealPromos(updated);
-    setBusinessName(""); setOffer(""); setPrice(""); setPhone("");
-    Alert.alert("LIVE in " + category + "!");
+  useEffect(() => {
+    loadBusinesses();
+    AsyncStorage.getItem('raymedia_banner').then(b => {
+      if(b){ const d = JSON.parse(b); setBannerTitle(d.title); setBannerSub(d.sub); }
+    });
+  }, []);
+
+  const loadBusinesses = async () => {
+    const data = await AsyncStorage.getItem('raymedia_businesses');
+    if(data) setBusinesses(JSON.parse(data));
   };
 
-  const handleDelete = async (id) => {
-    const updated = realPromos.filter(p => p.id !== id);
-    await AsyncStorage.setItem('real_promos', JSON.stringify(updated));
-    setRealPromos(updated);
+  const saveBusiness = async () => {
+    if(!name ||!phone){ Alert.alert("Fill name & phone"); return; }
+    const newBiz = { id: Date.now().toString(), name, category, phone, address };
+    const updated = [...businesses, newBiz];
+    await AsyncStorage.setItem('raymedia_businesses', JSON.stringify(updated));
+    setBusinesses(updated);
+    setName(""); setPhone(""); setAddress("");
+    Alert.alert("Business Added!");
   };
 
-  if (!isLoggedIn) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#0a0a0a", padding: 20, paddingTop: 100 }}>
-        <Text style={{ color: "#FFD700", fontSize: 24, fontWeight: "bold" }}>Admin</Text>
-        <TextInput value={password} onChangeText={setPassword} secureTextEntry placeholder="Password" style={{ backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 20 }} />
-        <TouchableOpacity onPress={handleLogin} style={{ backgroundColor: "#FFD700", padding: 15, borderRadius: 10, marginTop: 15 }}><Text style={{ textAlign: "center", fontWeight: "bold" }}>LOGIN</Text></TouchableOpacity>
-      </View>
-    );
-  }
+  const deleteBusiness = async (id: string) => {
+    const updated = businesses.filter(b => b.id!== id);
+    await AsyncStorage.setItem('raymedia_businesses', JSON.stringify(updated));
+    setBusinesses(updated);
+  };
+
+  const saveBanner = async () => {
+    await AsyncStorage.setItem('raymedia_banner', JSON.stringify({ title: bannerTitle, sub: bannerSub }));
+    Alert.alert("✅ Banner Updated!", "Go to HOME - you'll see it instantly");
+  };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#0a0a0a", padding: 16, paddingTop: 60 }}>
-      <TouchableOpacity onPress={() => router.back()}><Text style={{ color: "#888" }}>← Back to App</Text></TouchableOpacity>
-      <Text style={{ color: "#FFD700", fontSize: 22, fontWeight: "bold", marginTop: 10 }}>Add Business + Category</Text>
-      
-      <Text style={{ color: "#888", marginTop: 15, fontSize: 12 }}>SELECT CATEGORY *</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
-        {CATS.map((c) => (
-          <TouchableOpacity key={c} onPress={() => setCategory(c)} style={{ backgroundColor: category === c ? "#FFD700" : "#222", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8, marginBottom: 8 }}>
-            <Text style={{ color: category === c ? "black" : "white", fontWeight: "bold", fontSize: 12 }}>{c}</Text>
-          </TouchableOpacity>
-        ))}
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>RAYMEDIA ADMIN</Text>
+
+      {/* === BANNER MANAGER === */}
+      <View style={styles.bannerBox}>
+        <Text style={styles.bannerHeader}>💰 BANNER CONTROL (Money Slot)</Text>
+        <Text style={styles.label}>Banner Title (Big Gold Text)</Text>
+        <TextInput value={bannerTitle} onChangeText={setBannerTitle} style={styles.input} placeholder="e.g. Joe's Pizza - 2 Pizzas R120" placeholderTextColor="#666" />
+        <Text style={styles.label}>Subtitle / Phone / Offer</Text>
+        <TextInput value={bannerSub} onChangeText={setBannerSub} style={styles.input} placeholder="e.g. Call 071 123 4567 - Randpark Ridge" placeholderTextColor="#666" />
+        <TouchableOpacity onPress={saveBanner} style={styles.goldBtn}>
+          <Text style={styles.goldBtnText}>SAVE BANNER → SHOW ON HOME</Text>
+        </TouchableOpacity>
+        <Text style={{ color: "#666", fontSize: 10, marginTop: 6, textAlign: "center" }}>This updates HOME instantly. No rebuild needed.</Text>
       </View>
 
-      <TextInput value={businessName} onChangeText={setBusinessName} placeholder="Business Name *" style={input} />
-      <TextInput value={area} onChangeText={setArea} placeholder="Address / Area - e.g. Shop 12, Randburg" style={input} />
-      <TextInput value={offer} onChangeText={setOffer} placeholder="Offer - e.g. 20% off plumbing" style={input} />
-      <TextInput value={price} onChangeText={setPrice} placeholder="Price - e.g. R500" style={input} />
-      <TextInput value={phone} onChangeText={setPhone} placeholder="WhatsApp / Phone *" style={input} />
-
-      <TouchableOpacity onPress={handleAdd} style={{ backgroundColor: "#FFD700", padding: 16, borderRadius: 12, marginTop: 15 }}><Text style={{ textAlign: "center", fontWeight: "bold" }}>SAVE TO {category.toUpperCase()} - MAKE LIVE</Text></TouchableOpacity>
-
-      <View style={{ marginTop: 30 }}><Text style={{ color: "#FFD700", fontWeight: "bold" }}>Live ({realPromos.length})</Text>
-        {realPromos.map((p) => (
-          <View key={p.id} style={{ backgroundColor: "#1a1a1a", padding: 12, borderRadius: 10, marginTop: 10 }}>
-            <Text style={{ color: "white", fontWeight: "bold" }}>{p.businessName} [{p.category}]</Text>
-            <Text style={{ color: "#888", fontSize: 11 }}>{p.area}</Text>
-            <TouchableOpacity onPress={() => handleDelete(p.id)}><Text style={{ color: "red", marginTop: 6 }}>Delete</Text></TouchableOpacity>
-          </View>
-        ))}
+      {/* === ADD BUSINESS === */}
+      <View style={styles.formBox}>
+        <Text style={styles.formHeader}>Add New Business</Text>
+        <TextInput value={name} onChangeText={setName} style={styles.input} placeholder="Business Name" placeholderTextColor="#666" />
+        <View style={styles.pickerBox}>
+          <Picker selectedValue={category} onValueChange={setCategory} style={{ color: "white" }}>
+            {CATEGORIES.map(c => <Picker.Item key={c} label={c} value={c} />)}
+          </Picker>
+        </View>
+        <TextInput value={phone} onChangeText={setPhone} style={styles.input} placeholder="WhatsApp Number" placeholderTextColor="#666" keyboardType="phone-pad" />
+        <TextInput value={address} onChangeText={setAddress} style={styles.input} placeholder="Area e.g. Randburg" placeholderTextColor="#666" />
+        <TouchableOpacity onPress={saveBusiness} style={styles.saveBtn}>
+          <Text style={{ textAlign: "center", fontWeight: "bold", color: "white" }}>+ ADD BUSINESS</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* === LIST === */}
+      <Text style={styles.listHeader}>Saved Businesses ({businesses.length})</Text>
+      {businesses.map(b => (
+        <View key={b.id} style={styles.bizCard}>
+          <Text style={{ color: "white", fontWeight: "bold" }}>{b.name}</Text>
+          <Text style={{ color: "#d4b86a", fontSize: 11 }}>{b.category} • {b.phone}</Text>
+          <TouchableOpacity onPress={() => deleteBusiness(b.id)}><Text style={{ color: "red", fontSize: 11, marginTop: 4 }}>Delete</Text></TouchableOpacity>
+        </View>
+      ))}
       <View style={{ height: 100 }} />
     </ScrollView>
   );
 }
-const input = { backgroundColor: "white", padding: 14, borderRadius: 10, marginTop: 10 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#000", padding: 12 },
+  header: { color: "#d4b86a", fontSize: 18, fontWeight: "bold", textAlign: "center", marginVertical: 14 },
+  bannerBox: { backgroundColor: "#111", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: "#d4b86a", marginBottom: 16 },
+  bannerHeader: { color: "#d4b86a", fontWeight: "bold", marginBottom: 10 },
+  label: { color: "#aaa", fontSize: 10, marginBottom: 4, marginTop: 6 },
+  input: { backgroundColor: "#222", color: "white", padding: 10, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: "#333" },
+  goldBtn: { backgroundColor: "#d4b86a", padding: 12, borderRadius: 8, marginTop: 4 },
+  goldBtnText: { textAlign: "center", fontWeight: "bold", color: "#000", fontSize: 12 },
+  formBox: { backgroundColor: "#111", padding: 12, borderRadius: 12, marginBottom: 16 },
+  formHeader: { color: "white", fontWeight: "bold", marginBottom: 10 },
+  pickerBox: { backgroundColor: "#222", borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: "#333" },
+  saveBtn: { backgroundColor: "#333", padding: 12, borderRadius: 8, marginTop: 4 },
+  listHeader: { color: "white", fontWeight: "bold", marginBottom: 8 },
+  bizCard: { backgroundColor: "#151515", padding: 10, borderRadius: 8, marginBottom: 6, borderWidth: 1, borderColor: "#222" }
+});
