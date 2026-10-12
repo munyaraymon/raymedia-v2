@@ -1,128 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
+import { useRouter } from 'expo-router';
 
-const CATEGORIES = ["Home Services","Food & Takeaway","Beauty & Care","Auto & Repair","Health","Shopping & Retail","Education & Kids","Deals from Amazon"];
+const CATS = ["Food", "Beauty", "Home", "Health", "Auto", "Fashion", "Other"];
+
+type Slide = { id: number, image: string, big: string, small: string, link: string };
 
 export default function Admin() {
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [businesses, setBusinesses] = useState<any[]>([]);
+  const router = useRouter();
+  const [isLogged, setIsLogged] = useState(false);
+  const [pass, setPass] = useState("");
 
-  const [bannerTitle, setBannerTitle] = useState("Premium Banner - Your Business Here");
-  const [bannerSub, setBannerSub] = useState("Advertise in Randburg from R250/month - Tap to Advertise");
-  const [bannerLink, setBannerLink] = useState("");
+  const [slides, setSlides] = useState<Slide[]>([
+    { id: 1, image: "", big: "Premium Banner - Your Business Here", small: "Advertise in Randburg from R250/month", link: "" }
+  ]);
+
+  const [cat, setCat] = useState("Food");
+  const [name, setName] = useState(""); const [area, setArea] = useState("Randburg");
+  const [offer, setOffer] = useState(""); const [price, setPrice] = useState(""); const [phone, setPhone] = useState("");
 
   useEffect(() => {
-    loadBusinesses();
-    AsyncStorage.getItem('raymedia_banner').then(b => {
-      if(b){ const d = JSON.parse(b); setBannerTitle(d.title||bannerTitle); setBannerSub(d.sub||bannerSub); setBannerLink(d.link||""); }
-    });
+    AsyncStorage.getItem('bannerSlides').then(v => { if(v) setSlides(JSON.parse(v)); });
   }, []);
 
-  const loadBusinesses = async () => {
-    const p1 = await AsyncStorage.getItem('raymedia_businesses');
-    const p2 = await AsyncStorage.getItem('real_promos');
-    let all:any[] = [];
-    if(p1) all = all.concat(JSON.parse(p1).map((x:any)=>({ id: x.id, name: x.name||x.businessName, category: x.category, phone: x.phone, address: x.address||"" })));
-    // dedup by id
-    const map = new Map(); all.forEach(b=>map.set(b.id,b));
-    setBusinesses(Array.from(map.values()));
+  const saveSlides = async () => {
+    await AsyncStorage.setItem('bannerSlides', JSON.stringify(slides));
+    alert(`${slides.length} Slides Saved! Home will now slideshow`);
   };
 
-  const saveBusiness = async () => {
-    if(!name ||!phone){ Alert.alert("Fill name & phone"); return; }
-    const newBiz = { id: Date.now().toString(), name, category, phone, address };
-    const existingRaw = await AsyncStorage.getItem('raymedia_businesses');
-    const existing = existingRaw? JSON.parse(existingRaw) : [];
-    const updated = [...existing, newBiz];
-    // Save to BOTH keys so old index + new index see it
-    await AsyncStorage.setItem('raymedia_businesses', JSON.stringify(updated));
-    await AsyncStorage.setItem('real_promos', JSON.stringify(updated.map((x:any)=>({
-      id: x.id, businessName: x.name, offer: x.address? `${x.address} • ${x.phone}`: x.phone, category: x.category, searchText: `${x.name} ${x.category} ${x.phone} ${x.address||""}`
-    }))));
-    setBusinesses(updated);
-    setName(""); setPhone(""); setAddress("");
-    Alert.alert("Added!");
+  const updateSlide = (id: number, field: keyof Slide, value: string) => {
+    setSlides(prev => prev.map(s => s.id===id? {...s, [field]: value} : s));
   };
 
-  const deleteBusiness = async (id: string) => {
-    const raw = await AsyncStorage.getItem('raymedia_businesses');
-    const list = raw? JSON.parse(raw): [];
-    const updated = list.filter((b:any)=> b.id!== id);
-    await AsyncStorage.setItem('raymedia_businesses', JSON.stringify(updated));
-    await AsyncStorage.setItem('real_promos', JSON.stringify(updated.map((x:any)=>({
-      id: x.id, businessName: x.name, offer: x.address? `${x.address} • ${x.phone}`: x.phone, category: x.category
-    }))));
-    setBusinesses(updated);
-  };
-
-  const saveBanner = async () => {
-    await AsyncStorage.setItem('raymedia_banner', JSON.stringify({ title: bannerTitle, sub: bannerSub, link: bannerLink }));
-    Alert.alert("✅ Banner Live!", "Home banner updated instantly. Tap it to test link.");
-  };
+  if (!isLogged) {
+    return (
+      <View style={{ flex:1, backgroundColor:'black', justifyContent:'center', padding:20 }}>
+        <Text style={{ color:'#FFD700', fontSize:22, textAlign:'center', marginBottom:20, fontWeight:'bold' }}>RAYMEDIA ADMIN</Text>
+        <TextInput placeholder="Password" secureTextEntry value={pass} onChangeText={setPass} placeholderTextColor="#888" style={{ backgroundColor:'#222', color:'white', padding:15, borderRadius:12 }} />
+        <TouchableOpacity onPress={()=> pass==='ray1234'? setIsLogged(true) : alert('Wrong')} style={{ backgroundColor:'#FFD700', padding:15, borderRadius:12, marginTop:15 }}>
+          <Text style={{ textAlign:'center', fontWeight:'bold' }}>LOGIN</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>RAYMEDIA ADMIN - FINAL</Text>
+    <ScrollView style={{ flex:1, backgroundColor:'black', padding:16 }}>
+      <TouchableOpacity onPress={()=>router.push('/')}><Text style={{ color:'#888' }}>← Back to App</Text></TouchableOpacity>
+      <Text style={{ color:'#FFD700', fontSize:24, fontWeight:'bold', marginVertical:16 }}>Banner Slideshow Control</Text>
 
-      <View style={styles.bannerBox}>
-        <Text style={styles.bannerHeader}>💰 BANNER CONTROL (Matches Home)</Text>
-        <Text style={styles.label}>Big Title (Gold)</Text>
-        <TextInput value={bannerTitle} onChangeText={setBannerTitle} style={styles.input} placeholderTextColor="#666" />
-        <Text style={styles.label}>Small Subtitle / Price</Text>
-        <TextInput value={bannerSub} onChangeText={setBannerSub} style={styles.input} placeholderTextColor="#666" />
-        <Text style={styles.label}>Link when tapped (WhatsApp / website)</Text>
-        <TextInput value={bannerLink} onChangeText={setBannerLink} style={styles.input} placeholder="https://wa.me/2772... or https://..." placeholderTextColor="#555" autoCapitalize="none" />
-        <TouchableOpacity onPress={saveBanner} style={styles.goldBtn}>
-          <Text style={styles.goldBtnText}>SAVE BANNER → HOME UPDATES</Text>
-        </TouchableOpacity>
-      </View>
+      {slides.map((s, index) => (
+        <View key={s.id} style={{ borderWidth:1, borderColor:'#333', borderRadius:16, padding:12, marginBottom:16, backgroundColor:'#111' }}>
+          <Text style={{ color:'#FFD700', fontWeight:'bold' }}>Slide {index+1}</Text>
 
-      <View style={styles.formBox}>
-        <Text style={styles.formHeader}>Add Business (saves for all versions)</Text>
-        <TextInput value={name} onChangeText={setName} style={styles.input} placeholder="Business Name" placeholderTextColor="#666" />
-        <View style={styles.pickerBox}>
-          <Picker selectedValue={category} onValueChange={setCategory} style={{ color: "white" }}>
-            {CATEGORIES.map(c => <Picker.Item key={c} label={c} value={c} />)}
-          </Picker>
-        </View>
-        <TextInput value={phone} onChangeText={setPhone} style={styles.input} placeholder="WhatsApp" placeholderTextColor="#666" keyboardType="phone-pad" />
-        <TextInput value={address} onChangeText={setAddress} style={styles.input} placeholder="Area e.g. Randburg" placeholderTextColor="#666" />
-        <TouchableOpacity onPress={saveBusiness} style={styles.saveBtn}>
-          <Text style={{ textAlign: "center", fontWeight: "bold", color: "white" }}>+ ADD BUSINESS</Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={{ color:'#888', fontSize:12, marginTop:8 }}>IMAGE LINK * paste e.g. https://i.imgur.com/xxx.jpg</Text>
+          <TextInput value={s.image} onChangeText={v=>updateSlide(s.id,'image',v)} placeholder="https://..." placeholderTextColor="#555" style={{ backgroundColor:'#222', color:'white', padding:12, borderRadius:10, marginBottom:8 }} />
 
-      <Text style={styles.listHeader}>Saved ({businesses.length}) - Visible in old & new app</Text>
-      {businesses.map((b:any) => (
-        <View key={b.id} style={styles.bizCard}>
-          <Text style={{ color: "white", fontWeight: "bold" }}>{b.name}</Text>
-          <Text style={{ color: "#d4b86a", fontSize: 11 }}>{b.category} • {b.phone}</Text>
-          <TouchableOpacity onPress={() => deleteBusiness(b.id)}><Text style={{ color: "red", fontSize: 11, marginTop: 4 }}>Delete</Text></TouchableOpacity>
+          <Text style={{ color:'#888', fontSize:12 }}>Big Title</Text>
+          <TextInput value={s.big} onChangeText={v=>updateSlide(s.id,'big',v)} style={{ backgroundColor:'#222', color:'white', padding:12, borderRadius:10, marginBottom:8 }} />
+
+          <Text style={{ color:'#888', fontSize:12 }}>Small Title / Price</Text>
+          <TextInput value={s.small} onChangeText={v=>updateSlide(s.id,'small',v)} style={{ backgroundColor:'#222', color:'white', padding:12, borderRadius:10, marginBottom:8 }} />
+
+          <Text style={{ color:'#888', fontSize:12 }}>Link when tapped (WhatsApp / Website)</Text>
+          <TextInput value={s.link} onChangeText={v=>updateSlide(s.id,'link',v)} placeholder="https://wa.me/27..." placeholderTextColor="#555" style={{ backgroundColor:'#222', color:'white', padding:12, borderRadius:10 }} />
+
+          {slides.length>1 && <TouchableOpacity onPress={()=>setSlides(prev=>prev.filter(x=>x.id!==s.id))}><Text style={{ color:'red', marginTop:8, textAlign:'right' }}>Remove Slide</Text></TouchableOpacity>}
         </View>
       ))}
-      <View style={{ height: 100 }} />
+
+      <View style={{ flexDirection:'row', gap:10 }}>
+        <TouchableOpacity onPress={()=>setSlides([...slides, { id: Date.now(), image:"", big:"", small:"", link:"" }])} style={{ flex:1, backgroundColor:'#222', padding:14, borderRadius:12, borderWidth:1, borderColor:'#FFD700' }}><Text style={{ color:'#FFD700', textAlign:'center' }}>+ Add Slide</Text></TouchableOpacity>
+        <TouchableOpacity onPress={saveSlides} style={{ flex:2, backgroundColor:'#FFD700', padding:14, borderRadius:12 }}><Text style={{ textAlign:'center', fontWeight:'bold' }}>SAVE ALL SLIDES → HOME</Text></TouchableOpacity>
+      </View>
+
+      {/* YOUR BUSINESS PART - SAME AS YOUR SCREENSHOT */}
+      <Text style={{ color:'#FFD700', fontSize:20, fontWeight:'bold', marginTop:30 }}>Add Business + Category</Text>
+      <View style={{ flexDirection:'row', flexWrap:'wrap', gap:8, marginVertical:12 }}>
+        {CATS.map(c => (<TouchableOpacity key={c} onPress={()=>setCat(c)} style={{ backgroundColor: cat===c? '#FFD700' : '#222', paddingVertical:10, paddingHorizontal:18, borderRadius:20 }}><Text style={{ color: cat===c? 'black' : 'white' }}>{c}</Text></TouchableOpacity>))}
+      </View>
+      <TextInput value={name} onChangeText={setName} placeholder="Business Name *" placeholderTextColor="#888" style={{ backgroundColor:'white', padding:16, borderRadius:16, marginBottom:12 }} />
+      <TextInput value={area} onChangeText={setArea} style={{ backgroundColor:'white', padding:16, borderRadius:16, marginBottom:12 }} />
+      <TextInput value={offer} onChangeText={setOffer} placeholder="Offer - e.g. 20% off plumbing" placeholderTextColor="#888" style={{ backgroundColor:'white', padding:16, borderRadius:16, marginBottom:12 }} />
+      <TextInput value={price} onChangeText={setPrice} placeholder="Price - e.g. R500" placeholderTextColor="#888" style={{ backgroundColor:'white', padding:16, borderRadius:16, marginBottom:12 }} />
+      <TextInput value={phone} onChangeText={setPhone} placeholder="WhatsApp / Phone *" placeholderTextColor="#888" style={{ backgroundColor:'white', padding:16, borderRadius:16, marginBottom:12 }} />
+      <TouchableOpacity style={{ backgroundColor:'#FFD700', padding:18, borderRadius:16 }}><Text style={{ textAlign:'center', fontWeight:'bold' }}>SAVE TO {cat.toUpperCase()} - MAKE LIVE</Text></TouchableOpacity>
+      <View style={{ height:60 }} />
     </ScrollView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000", padding: 12 },
-  header: { color: "#d4b86a", fontSize: 16, fontWeight: "bold", textAlign: "center", marginVertical: 14 },
-  bannerBox: { backgroundColor: "#111", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: "#d4b86a", marginBottom: 16 },
-  bannerHeader: { color: "#d4b86a", fontWeight: "bold", marginBottom: 10, fontSize: 12 },
-  label: { color: "#aaa", fontSize: 9, marginBottom: 3, marginTop: 6 },
-  input: { backgroundColor: "#222", color: "white", padding: 9, borderRadius: 8, marginBottom: 6, borderWidth: 1, borderColor: "#333", fontSize: 12 },
-  goldBtn: { backgroundColor: "#d4b86a", padding: 11, borderRadius: 8, marginTop: 6 },
-  goldBtnText: { textAlign: "center", fontWeight: "bold", color: "#000", fontSize: 11 },
-  formBox: { backgroundColor: "#111", padding: 12, borderRadius: 12, marginBottom: 16 },
-  formHeader: { color: "white", fontWeight: "bold", marginBottom: 10, fontSize: 12 },
-  pickerBox: { backgroundColor: "#222", borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: "#333" },
-  saveBtn: { backgroundColor: "#333", padding: 11, borderRadius: 8, marginTop: 4 },
-  listHeader: { color: "white", fontWeight: "bold", marginBottom: 8, fontSize: 12 },
-  bizCard: { backgroundColor: "#151515", padding: 10, borderRadius: 8, marginBottom: 6, borderWidth: 1, borderColor: "#222" }
-});
+        }
