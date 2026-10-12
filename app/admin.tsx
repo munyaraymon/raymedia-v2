@@ -4,71 +4,60 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "reac
 const DATA_URL = "https://api.npoint.io/b5d4effa1f6c9ef05512";
 
 export default function Admin() {
-  const [banners, setBanners] = useState<any[]>([{image:"", big:"Raymedia", small:"", link:"https://wa.me/27739422476"}]);
-  const [businesses, setBusinesses] = useState<any[]>([]);
-  const [newBiz, setNewBiz] = useState({name:"", category:"Food", promo:"", discount:"", whatsapp:""});
+  const [slides, setSlides] = useState([{image:"", bigTitle:"", smallSubtitle:"", link:""}]);
+  const [category, setCategory] = useState("Food");
+  const [bizName, setBizName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [allData, setAllData] = useState({banners:[], businesses:[]});
 
-  useEffect(() => {
+  useEffect(()=>{
     fetch(DATA_URL).then(r=>r.json()).then(d=>{
-      if(d.banners?.length) setBanners(d.banners);
-      if(d.businesses) setBusinesses(d.businesses);
+      setAllData(d);
+      if(d.banners?.length) setSlides(d.banners.map((b:any)=>({image:b.image, bigTitle:b.big||"", smallSubtitle:b.small||"", link:b.link})));
     });
-  }, []);
+  },[]);
 
-  const saveAll = async () => {
-    const cleanBanners = banners.map(b=>({
-     ...b,
-      image: b.image.trim().replace(/\s/g,''),
-      link: b.link.trim()
-    }));
-    const res = await fetch(DATA_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({banners: cleanBanners, businesses})
-    });
-    if(res.ok) Alert.alert("LIVE! All phones in Randburg will see this now");
+  const saveBanner = async () => {
+    const newBanners = slides.map(s=>({image:s.image.trim(), big:s.bigTitle, small:s.smallSubtitle, link:s.link.trim()}));
+    const newData = {...allData, banners:newBanners};
+    const res = await fetch(DATA_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newData)});
+    if(res.ok){ Alert.alert("Banner LIVE for all phones!"); setAllData(newData); }
+    else Alert.alert("Failed - check internet");
+  };
+
+  const saveBusiness = async () => {
+    if(!bizName ||!phone) return Alert.alert("Enter Business Name and WhatsApp");
+    const newBiz = {name:bizName, category, whatsapp:phone, promo:"", discount:""};
+    const newData = {...allData, businesses:[...(allData.businesses||[]), newBiz]};
+    const res = await fetch(DATA_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newData)});
+    if(res.ok){ Alert.alert(`${bizName} LIVE in ${category} for all phones!`); setAllData(newData); setBizName(""); setPhone(""); }
     else Alert.alert("Failed");
   };
 
-  const addBusiness = () => {
-    if(!newBiz.name) return Alert.alert("Enter business name");
-    setBusinesses([...businesses, newBiz]);
-    setNewBiz({name:"", category:"Food", promo:"", discount:"", whatsapp:""});
-  };
+  const cats = ["Food","Beauty","Home","Health","Auto","Fashion","Other"];
 
   return (
-    <ScrollView style={{flex:1, padding:16, backgroundColor:'#fff'}}>
-      <Text style={{fontSize:22, fontWeight:'bold', marginBottom:12}}>Raymedia Admin - Goes LIVE for ALL</Text>
-
-      <Text style={{fontWeight:'bold', marginTop:12}}>BANNER (Client who pays R250)</Text>
-      {banners.map((b,i)=>(
-        <View key={i} style={{borderWidth:1, borderColor:'#ddd', padding:10, borderRadius:10, marginBottom:10, marginTop:8}}>
-          <Text>Image Link (postimages Direct Link)</Text>
-          <TextInput value={b.image} onChangeText={t=>{let nb=[...banners]; nb[i].image=t; setBanners(nb)}} style={{borderWidth:1, padding:8, borderRadius:8, marginBottom:6}} placeholder="https://i.postimg.cc/...jpg" />
-          <Text>Link when tapped (wa.me or website)</Text>
-          <TextInput value={b.link} onChangeText={t=>{let nb=[...banners]; nb[i].link=t; setBanners(nb)}} style={{borderWidth:1, padding:8, borderRadius:8}} placeholder="https://wa.me/27739422476" />
+    <ScrollView style={{flex:1, backgroundColor:'#000', padding:16}}>
+      {slides.map((s,i)=>(
+        <View key={i} style={{backgroundColor:'#1a1a1a', borderRadius:16, padding:12, marginBottom:12}}>
+          <TextInput placeholder="Image Link - https://i.imgur.com/xxx.jpg" placeholderTextColor="#666" value={s.image} onChangeText={t=>{let ns=[...slides]; ns[i].image=t; setSlides(ns)}} style={{backgroundColor:'#2a2a2a', color:'#fff', borderRadius:12, padding:14, marginBottom:10}} />
+          <TextInput placeholder="Big Title" placeholderTextColor="#666" value={s.bigTitle} onChangeText={t=>{let ns=[...slides]; ns[i].bigTitle=t; setSlides(ns)}} style={{backgroundColor:'#2a2a2a', color:'#fff', borderRadius:12, padding:14, marginBottom:10}} />
+          <TextInput placeholder="Small Subtitle" placeholderTextColor="#666" value={s.smallSubtitle} onChangeText={t=>{let ns=[...slides]; ns[i].smallSubtitle=t; setSlides(ns)}} style={{backgroundColor:'#2a2a2a', color:'#fff', borderRadius:12, padding:14, marginBottom:10}} />
+          <TextInput placeholder="Link when tapped - wa.me/..." placeholderTextColor="#666" value={s.link} onChangeText={t=>{let ns=[...slides]; ns[i].link=t; setSlides(ns)}} style={{backgroundColor:'#2a2a2a', color:'#fff', borderRadius:12, padding:14}} />
         </View>
       ))}
+      <TouchableOpacity onPress={()=>setSlides([...slides,{image:"", bigTitle:"", smallSubtitle:"", link:""}])} style={{borderWidth:1, borderColor:'#FFD700', borderRadius:12, padding:16, alignItems:'center', marginBottom:12}}><Text style={{color:'#FFD700'}}>+ Add Slide</Text></TouchableOpacity>
+      <TouchableOpacity onPress={saveBanner} style={{backgroundColor:'#FFD700', borderRadius:12, padding:18, alignItems:'center', marginBottom:24}}><Text style={{fontWeight:'bold', color:'#000'}}>SAVE BANNER SLIDESHOW → HOME</Text></TouchableOpacity>
 
-      <Text style={{fontWeight:'bold', marginTop:20}}>ADD BUSINESS</Text>
-      <View style={{borderWidth:1, borderColor:'#ddd', padding:10, borderRadius:10, marginTop:8}}>
-        <TextInput placeholder="Business Name" value={newBiz.name} onChangeText={t=>setNewBiz({...newBiz, name:t})} style={{borderWidth:1, padding:8, borderRadius:8, marginBottom:6}} />
-        <TextInput placeholder="Category (Food, Beauty...)" value={newBiz.category} onChangeText={t=>setNewBiz({...newBiz, category:t})} style={{borderWidth:1, padding:8, borderRadius:8, marginBottom:6}} />
-        <TextInput placeholder="Promo e.g. 2 meals for R100" value={newBiz.promo} onChangeText={t=>setNewBiz({...newBiz, promo:t})} style={{borderWidth:1, padding:8, borderRadius:8, marginBottom:6}} />
-        <TextInput placeholder="Discount e.g. 20%" value={newBiz.discount} onChangeText={t=>setNewBiz({...newBiz, discount:t})} style={{borderWidth:1, padding:8, borderRadius:8, marginBottom:6}} />
-        <TextInput placeholder="WhatsApp number e.g. 27721234567" value={newBiz.whatsapp} onChangeText={t=>setNewBiz({...newBiz, whatsapp:t})} style={{borderWidth:1, padding:8, borderRadius:8, marginBottom:8}} />
-        <TouchableOpacity onPress={addBusiness} style={{backgroundColor:'#eee', padding:12, borderRadius:8}}><Text style={{textAlign:'center'}}>Add to List</Text></TouchableOpacity>
+      <Text style={{color:'#FFD700', fontSize:22, fontWeight:'bold', marginBottom:12}}>Add Business</Text>
+      <View style={{flexDirection:'row', flexWrap:'wrap', gap:8, marginBottom:12}}>
+        {cats.map(c=>(
+          <TouchableOpacity key={c} onPress={()=>setCategory(c)} style={{backgroundColor: category===c? '#FFD700' : '#2a2a2a', paddingHorizontal:18, paddingVertical:10, borderRadius:20}}><Text style={{color: category===c? '#000':'#fff'}}>{c}</Text></TouchableOpacity>
+        ))}
       </View>
-
-      <Text style={{marginTop:12, fontWeight:'bold'}}>Businesses ({businesses.length}) will go live:</Text>
-      {businesses.map((b:any,i:number)=>(
-        <View key={i} style={{flexDirection:'row', justifyContent:'space-between', padding:8, borderBottomWidth:1, borderColor:'#eee'}}>
-          <Text>{b.name} - {b.category}</Text>
-          <TouchableOpacity onPress={()=>setBusinesses(businesses.filter((_,idx)=>idx!==i))}><Text style={{color:'red'}}>Remove</Text></TouchableOpacity>
-        </View>
-      ))}
-
-      <TouchableOpacity onPress={saveAll} style={{padding:16, backgroundColor:'#FFD700', borderRadius:12, marginTop:20, marginBottom:100}}><Text style={{fontWeight:'bold', textAlign:'center', fontSize:16}}>SAVE TO INTERNET - GO LIVE FOR ALL</Text></TouchableOpacity>
+      <TextInput placeholder="Business Name *" placeholderTextColor="#999" value={bizName} onChangeText={setBizName} style={{backgroundColor:'#fff', borderRadius:20, padding:18, marginBottom:12}} />
+      <TextInput placeholder="WhatsApp / Phone *" placeholderTextColor="#999" value={phone} onChangeText={setPhone} style={{backgroundColor:'#fff', borderRadius:20, padding:18, marginBottom:12}} />
+      <TouchableOpacity onPress={saveBusiness} style={{backgroundColor:'#FFD700', borderRadius:20, padding:18, alignItems:'center', marginBottom:100}}><Text style={{fontWeight:'bold', color:'#000', fontSize:16}}>SAVE TO {category.toUpperCase()}</Text></TouchableOpacity>
     </ScrollView>
   );
-          }
+                                       }
