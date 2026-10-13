@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal } from "react-native";
 import { useRouter } from "expo-router";
 
-const DATA_URL = "https://api.npoint.io/231ac0e4ddb44534ab1c";
+const DATA_URL = "https://api.npoint.io/39acdeee8ed90fd48a1c";
 const ADMIN_PASSWORD = "ray1234";
 
 export default function Admin(){
