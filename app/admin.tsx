@@ -23,7 +23,15 @@ export default function Admin(){
       <View style={{flex:1, backgroundColor:'#000', justifyContent:'center', padding:20}}>
         <TouchableOpacity onPress={()=>router.push('/')} style={{position:'absolute', top:40, left:16, backgroundColor:'#1a1a1a', padding:10, borderRadius:8, borderWidth:1, borderColor:'#333'}}><Text style={{color:'#FFD700'}}>← Back to Home</Text></TouchableOpacity>
         <Text style={{color:'#FFD700', fontSize:26, fontWeight:'bold', textAlign:'center'}}>RAYMEDIA ADMIN</Text>
-        <TextInput placeholder="Password ray1234" secureTextEntry value={passInput} onChangeText={setPassInput} style={{backgroundColor:'#1a1a1a', color:'#fff', borderRadius:12, padding:16, marginTop:20, marginBottom:12, borderWidth:1, borderColor:'#333'}}/>
+        {/* FIXED: Password hidden now */}
+        <TextInput
+          placeholder="Enter Admin Password"
+          secureTextEntry={true}
+          placeholderTextColor="#666"
+          value={passInput}
+          onChangeText={setPassInput}
+          style={{backgroundColor:'#1a1a1a', color:'#fff', borderRadius:12, padding:16, marginTop:20, marginBottom:12, borderWidth:1, borderColor:'#333'}}
+        />
         <TouchableOpacity onPress={()=>{ if(passInput===ADMIN_PASSWORD) setLogged(true); else Alert.alert("Wrong"); }} style={{backgroundColor:'#FFD700', padding:16, borderRadius:12}}><Text style={{fontWeight:'bold', textAlign:'center'}}>LOGIN</Text></TouchableOpacity>
       </View>
     );
@@ -45,7 +53,6 @@ export default function Admin(){
 
   return (
     <ScrollView style={{flex:1, backgroundColor:'#000', padding:14}}>
-      {/* BACK BUTTON INSIDE ADMIN - FIXED */}
       <TouchableOpacity onPress={()=>router.push('/')} style={{backgroundColor:'#1a1a1a', padding:12, borderRadius:10, alignSelf:'flex-start', marginBottom:12, borderWidth:1, borderColor:'#C9A86A'}}>
         <Text style={{color:'#FFD700', fontWeight:'bold'}}>← Back to Home</Text>
       </TouchableOpacity>
@@ -68,4 +75,4 @@ export default function Admin(){
       </View>
     </ScrollView>
   );
-      }
+        }
