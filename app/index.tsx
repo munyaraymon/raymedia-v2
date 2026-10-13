@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView, Linking, ActivityIndicator, TextInput, RefreshControl } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, Linking, ActivityIndicator, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 
 const DATA_URL = "https://api.npoint.io/231ac0e4ddb44534ab1c";
@@ -10,67 +10,106 @@ export default function Home() {
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [slide, setSlide] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState("All");
-  const categories = ["All", "Food", "Beauty", "Home", "Health", "Auto", "Fashion", "Other"];
+
+  // Small boxes to fit one page - like your screenshot
+  const cats = [
+    {id:"Beauty & Care", name:"Beauty & Care", icon:"💅"},
+    {id:"Auto & Repair", name:"Auto & Repair", icon:"🚗"},
+    {id:"Health", name:"Health", icon:"➕"},
+    {id:"Shopping & Retail", name:"Shopping & Retail", icon:"🛍️"},
+    {id:"Education & Kids", name:"Education & Kids", icon:"🎓"},
+    {id:"Deals from Amazon", name:"Deals from Amazon", icon:"📦"},
+    {id:"Food", name:"Food", icon:"🍔"},
+    {id:"Home", name:"Home", icon:"🏠"},
+  ];
 
   const load = async () => {
     try {
-      const res = await fetch(DATA_URL);
-      const d = await res.json();
-      setBanners(d.banners || []);
+      const r = await fetch(DATA_URL);
+      const d = await r.json();
+      setBanners(d.banners?.length? d.banners : [{image:"https://via.placeholder.com/600x200/FFD700/000?text=Premium+Banner", big:"Premium Banner - Your Business Here", small:"rotating banner ad", link:"https://wa.me/27739422476"}]);
       setBusinesses(d.businesses || []);
     } catch {}
-    setLoading(false); setRefreshing(false);
+    setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
-  useEffect(() => { if(banners.length===0) return; const t=setInterval(()=>setSlide(s=>(s+1)%banners.length),4000); return()=>clearInterval(t); }, [banners]);
+  useEffect(()=>{load();},[]);
+  useEffect(()=>{ if(!banners.length) return; const t=setInterval(()=>setSlide(s=>(s+1)%banners.length),3500); return()=>clearInterval(t); },[banners]);
 
-  const filtered = businesses.filter((b:any) => {
-    const mc = selectedCat==="All" || b.category===selectedCat;
-    const ms = b.name?.toLowerCase().includes(search.toLowerCase());
+  const filtered = businesses.filter((b:any)=>{
+    const mc = selectedCat==="All" || b.category===selectedCat || b.category?.toLowerCase().includes(selectedCat.toLowerCase()) || selectedCat.includes(b.category);
+    const ms =!search || b.name?.toLowerCase().includes(search.toLowerCase());
     return mc && ms;
   });
 
-  if(loading) return <View style={{flex:1,justifyContent:'center',alignItems:'center',marginTop:100}}><ActivityIndicator size="large"/></View>;
+  if(loading) return <View style={{flex:1, backgroundColor:'#000', justifyContent:'center', alignItems:'center'}}><ActivityIndicator color="#FFD700"/></View>;
+
+  const showBusinesses = search.length>0 || selectedCat!=="All";
 
   return (
-    <View style={{flex:1, backgroundColor:'#fff'}}>
-      <ScrollView style={{flex:1, padding:12}} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>{setRefreshing(true); load();}}/>}>
-        {banners.length>0 && banners[slide] && (
-          <TouchableOpacity onPress={()=>banners[slide].link && Linking.openURL(banners[slide].link)} style={{height:190, borderRadius:16, overflow:'hidden', marginBottom:16, backgroundColor:'#000'}}>
-            <Image source={{uri: banners[slide].image?.replace(/\s/g,'')}} style={{width:'100%', height:'100%'}} resizeMode="cover"/>
-            <View style={{position:'absolute', bottom:0, left:0, right:0, backgroundColor:'rgba(0,0,0,0.55)', padding:10}}>
-              <Text style={{color:'#fff', fontWeight:'bold', fontSize:16}}>{banners[slide].big}</Text>
-              <Text style={{color:'#FFD700', fontSize:12}}>{banners[slide].small}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
+    <View style={{flex:1, backgroundColor:'#000', padding:12, paddingTop:20}}>
+      {/* TOP: RAYMEDIA + ADMIN on top so it doesn't affect banner */}
+      <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+        <Text style={{color:'#FFD700', fontWeight:'bold', fontSize:22}}>RAYMEDIA</Text>
+        <TouchableOpacity onPress={()=>router.push('/admin')} style={{backgroundColor:'#1a1a1a', paddingHorizontal:14, paddingVertical:6, borderRadius:20}}>
+          <Text style={{color:'#888', fontSize:12}}>ADMIN</Text>
+        </TouchableOpacity>
+      </View>
 
-        <TextInput placeholder="Search business in Randburg..." value={search} onChangeText={setSearch} style={{borderWidth:1, borderColor:'#ddd', borderRadius:12, padding:12, marginBottom:12}}/>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom:14}}>
-          {categories.map(cat=><TouchableOpacity key={cat} onPress={()=>setSelectedCat(cat)} style={{paddingHorizontal:16, paddingVertical:8, borderRadius:20, backgroundColor:selectedCat===cat?'#FFD700':'#f0f0f0', marginRight:8}}><Text style={{fontWeight:selectedCat===cat?'bold':'normal'}}>{cat}</Text></TouchableOpacity>)}
-        </ScrollView>
+      {/* Search like screenshot */}
+      <View style={{flexDirection:'row', marginBottom:14}}>
+        <TextInput placeholder="Search pizza, plumber, nails..." placeholderTextColor="#666" value={search} onChangeText={setSearch} style={{flex:1, backgroundColor:'#1a1a1a', borderRadius:14, padding:14, color:'#fff', marginRight:8}}/>
+        <TouchableOpacity onPress={()=>{}} style={{backgroundColor:'#FFD700', width:54, height:50, borderRadius:14, justifyContent:'center', alignItems:'center'}}>
+          <Text>🔍</Text>
+        </TouchableOpacity>
+      </View>
 
-        <Text style={{fontWeight:'bold', fontSize:18, marginBottom:10}}>Businesses in Randburg ({filtered.length}) LIVE</Text>
-        {filtered.length===0 && <Text style={{color:'#999', marginTop:20, textAlign:'center'}}>No businesses yet. Add in Admin.</Text>}
-        {filtered.map((b:any,i:number)=>(
-          <TouchableOpacity key={i} onPress={()=>b.whatsapp && Linking.openURL(`https://wa.me/${b.whatsapp.replace(/\D/g,'')}`)} style={{padding:14, borderWidth:1, borderColor:'#eee', borderRadius:12, marginBottom:10, backgroundColor:'#fff'}}>
-            <Text style={{fontWeight:'bold', fontSize:16}}>{b.name} • {b.area || 'Randburg'}</Text>
-            <Text style={{color:'#666'}}>{b.category}{b.offer? ` • ${b.offer}`:''}</Text>
-            {b.price? <Text style={{color:'green', fontWeight:'bold', marginTop:2}}>{b.price}</Text>:null}
-            <Text style={{color:'#25D366', fontWeight:'bold', marginTop:6}}>WhatsApp {b.whatsapp}</Text>
-          </TouchableOpacity>
-        ))}
-        <View style={{height:120}}/>
-      </ScrollView>
+      {!showBusinesses? (
+        <>
+          <Text style={{color:'#C9A86A', fontSize:22, fontWeight:'bold', marginBottom:2}}>Find in Randburg</Text>
+          <Text style={{color:'#666', fontSize:11, marginBottom:12}}>Choose a category to explore local services</Text>
 
-      {/* ADMIN BUTTON BOTTOM RIGHT */}
-      <TouchableOpacity onPress={()=>router.push('/admin')} style={{position:'absolute', bottom:22, right:22, backgroundColor:'#000', width:58, height:58, borderRadius:29, justifyContent:'center', alignItems:'center', elevation:8}}>
-        <Text style={{color:'#FFD700', fontWeight:'bold', fontSize:10}}>ADMIN</Text>
+          {/* SMALL BOXES - 2 columns, fit one page */}
+          <View style={{flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between'}}>
+            {cats.map(c=>(
+              <TouchableOpacity key={c.id} onPress={()=>setSelectedCat(c.id)} style={{width:'48%', height:82, backgroundColor:'#0a0a0a', borderWidth:1, borderColor:'#C9A86A', borderRadius:14, justifyContent:'center', alignItems:'center', marginBottom:10}}>
+                <Text style={{fontSize:22}}>{c.icon}</Text>
+                <Text style={{color:'#C9A86A', fontSize:10, fontWeight:'600', marginTop:4, textAlign:'center'}}>{c.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
+      ) : (
+        <>
+          <TouchableOpacity onPress={()=>{setSelectedCat("All"); setSearch("");}} style={{marginBottom:10}}><Text style={{color:'#FFD700'}}>← Back to categories</Text></TouchableOpacity>
+          <Text style={{color:'#fff', fontWeight:'bold', marginBottom:8}}>{filtered.length} in {selectedCat} {search? `for "${search}"`:''}</Text>
+          <ScrollView style={{flex:1}}>
+            {filtered.map((b:any,i:number)=>(
+              <TouchableOpacity key={i} onPress={()=>b.whatsapp && Linking.openURL(`https://wa.me/${b.whatsapp.replace(/\D/g,'')}`)} style={{padding:12, borderWidth:1, borderColor:'#222', borderRadius:12, marginBottom:8, backgroundColor:'#111'}}>
+                <Text style={{color:'#fff', fontWeight:'bold'}}>{b.name} • {b.area}</Text>
+                <Text style={{color:'#888', fontSize:11}}>{b.category} {b.offer? `• ${b.offer}`:''} {b.price? `• ${b.price}`:''}</Text>
+                <Text style={{color:'#25D366', fontSize:11, marginTop:2}}>WhatsApp {b.whatsapp}</Text>
+              </TouchableOpacity>
+            ))}
+            {filtered.length===0 && <Text style={{color:'#666', textAlign:'center', marginTop:20}}>No businesses yet in {selectedCat}</Text>}
+          </ScrollView>
+        </>
+      )}
+
+      {/* BOTTOM BANNER - Sponsored rotating */}
+      <TouchableOpacity onPress={()=>banners[slide]?.link && Linking.openURL(banners[slide].link)} style={{borderWidth:1, borderColor:'#C9A86A', borderRadius:14, padding:10, backgroundColor:'#0a0a0a', marginTop:6}}>
+        <Text style={{color:'#666', fontSize:9, marginBottom:4}}>AD • Sponsored</Text>
+        <View style={{flexDirection:'row', alignItems:'center'}}>
+          <Text style={{fontSize:18, marginRight:8}}>🔄</Text>
+          <View style={{flex:1}}>
+            <Text style={{color:'#C9A86A', fontWeight:'bold', fontSize:11}} numberOfLines={1}>{banners[slide]?.big || "Premium Banner - Your Business Here"}</Text>
+            <Text style={{color:'#555', fontSize:9}}>{banners[slide]?.small || "rotating banner ad"} • {slide+1}/{banners.length}</Text>
+          </View>
+          {banners[slide]?.image? <Image source={{uri: banners[slide].image}} style={{width:40, height:24, borderRadius:4}}/> : null}
+        </View>
       </TouchableOpacity>
     </View>
   );
-    }
+                                                  }
