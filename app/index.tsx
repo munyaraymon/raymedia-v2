@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView, Linking, ActivityIndicator, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 
-const DATA_URL = "https://api.npoint.io/39acdeee8ed90fd48a1c";
+const DATA_URL = "https://api.npoint.io/231ac0e4ddb44534ab1c";
 export default function Home() {
   const router = useRouter();
   const [banners, setBanners] = useState<any[]>([]);
